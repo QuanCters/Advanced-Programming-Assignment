@@ -1,2 +1,7 @@
 commit: git commit -m "#1 - <message>"
-số nằm trong message commit sẽ lấy từ số thứ tự issue
+# số nằm trong message commit sẽ lấy từ số thứ tự issue
+
+pull request: "[BE][FEAT] <message>" / "[FE][FIX] <message>"
+
+push / pull / fetch / add / commit / clone / branch / checkout
+# advance: ammend / cherry-pick / rebase / merge
