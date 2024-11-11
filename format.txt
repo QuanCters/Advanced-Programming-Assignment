@@ -5,3 +5,5 @@ pull request: "[BE][FEAT] <message>" / "[FE][FIX] <message>"
 
 push / pull / fetch / add / commit / clone / branch / checkout
 # advance: ammend / cherry-pick / rebase / merge
+
+NOTE: 1 PULL REQUEST (n - 1) issue
