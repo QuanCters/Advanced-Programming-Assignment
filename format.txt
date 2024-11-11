@@ -1,0 +1,2 @@
+commit: git commit -m "#1 - <message>"
+số nằm trong message commit sẽ lấy từ số thứ tự issue
