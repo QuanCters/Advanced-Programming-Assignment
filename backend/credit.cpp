@@ -74,12 +74,8 @@ std::vector<ChuyenKhoan> readCSVAndBuildVector(const std::string &filename)
     }
 
     file.close();
-    return data;
-}
 
-bool compareByCredit(const ChuyenKhoan &a, const ChuyenKhoan &b)
-{
-    return a.credit < b.credit; // Compare by credit
+    return data;
 }
 
 std::vector<ChuyenKhoan> rangeSearchVector(
@@ -107,8 +103,19 @@ std::vector<ChuyenKhoan> rangeSearchVector(
     return results;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    // Check if the correct number of arguments is provided
+    if (argc != 3)
+    {
+        std::cerr << "Usage: " << argv[0] << " <lower_key> <upper_key>" << std::endl;
+        return 1; // Exit with an error code
+    }
+
+    // Parse the command-line arguments
+    int lower_key = std::stoi(argv[1]);
+    int upper_key = std::stoi(argv[2]);
+
     auto start = std::chrono::high_resolution_clock::now();
 
     std::string filename = "chuyen_khoan.csv";
@@ -118,8 +125,6 @@ int main()
               {
                   return a.credit < b.credit; // Sort by credit in ascending order
               });
-
-    int lower_key = 10000, upper_key = 100000;
 
     std::vector<ChuyenKhoan> results = rangeSearchVector(data, lower_key, upper_key);
 
