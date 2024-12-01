@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <chrono>
 
-struct ChuyenKhoan
+struct Transaction
 {
     std::string date_time;
     int trans_no;
@@ -34,11 +34,11 @@ std::string removeQuotes(const std::string &s)
     return result;
 }
 
-std::vector<ChuyenKhoan> readCSVAndBuildVector(const std::string &filename)
+std::vector<Transaction> readCSV(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
-    std::vector<ChuyenKhoan> data; // Vector to store ChuyenKhoan structs
+    std::vector<Transaction> data; // Vector to store Transaction structs
 
     // Check if the file is open
     if (!file.is_open())
@@ -55,7 +55,7 @@ std::vector<ChuyenKhoan> readCSVAndBuildVector(const std::string &filename)
     {
         std::stringstream ss(line);
         std::string value;
-        ChuyenKhoan record; // Create a ChuyenKhoan struct to hold the data
+        Transaction record; // Create a Transaction struct to hold the data
 
         // Split the line by commas
         std::getline(ss, value, ','); // Read date_time
@@ -78,20 +78,20 @@ std::vector<ChuyenKhoan> readCSVAndBuildVector(const std::string &filename)
     return data;
 }
 
-std::vector<ChuyenKhoan> rangeSearchVector(
-    const std::vector<ChuyenKhoan> &data,
+std::vector<Transaction> creditSearch(
+    const std::vector<Transaction> &data,
     int lower_bound_val,
     int upper_bound_val)
 {
-    std::vector<ChuyenKhoan> results;
+    std::vector<Transaction> results;
 
     // Find the iterator to the first element not less than lower_bound_val
     auto it_lower = std::lower_bound(data.begin(), data.end(), lower_bound_val,
-                                     [](const ChuyenKhoan &a, int b)
+                                     [](const Transaction &a, int b)
                                      { return a.credit < b; });
     // Find the iterator to the first element greater than upper_bound_val
     auto it_upper = std::upper_bound(data.begin(), data.end(), upper_bound_val,
-                                     [](int a, const ChuyenKhoan &b)
+                                     [](int a, const Transaction &b)
                                      { return a < b.credit; });
 
     // Iterate from it_lower to it_upper
@@ -103,37 +103,64 @@ std::vector<ChuyenKhoan> rangeSearchVector(
     return results;
 }
 
+std::vector<Transaction> detailSearch(const std::string &keyword, std::vector<Transaction> transactions)
+{
+    std::vector<Transaction> result = {};
+    std::string lowerKeyword = keyword;
+    std::transform(lowerKeyword.begin(), lowerKeyword.end(), lowerKeyword.begin(), ::tolower);
+    for (const auto &trans : transactions)
+    {
+        std::string lowerDetail = trans.detail;
+        transform(lowerDetail.begin(), lowerDetail.end(), lowerDetail.begin(), ::tolower);
+        if (lowerDetail.find(lowerKeyword) != std::string::npos)
+        {
+            result.push_back(trans);
+        }
+    }
+    return result;
+}
+
 int main(int argc, char *argv[])
 {
     // Check if the correct number of arguments is provided
-    if (argc != 3)
+    if (argc != 4)
     {
         std::cerr << "Usage: " << argv[0] << " <lower_key> <upper_key>" << std::endl;
         return 1; // Exit with an error code
     }
 
-    // Parse the command-line arguments
-    int lower_key = std::stoi(argv[1]);
-    int upper_key = std::stoi(argv[2]);
-
-    auto start = std::chrono::high_resolution_clock::now();
+    // int search_key = argv[1];
+    std::string detail_key = argv[1];
+    int lower_key = std::stoi(argv[2]);
+    int upper_key = std::stoi(argv[3]);
 
     std::string filename = "chuyen_khoan.csv";
-    std::vector<ChuyenKhoan> data = readCSVAndBuildVector(filename);
+    std::vector<Transaction> data = readCSV(filename);
 
-    std::sort(data.begin(), data.end(), [](const ChuyenKhoan &a, const ChuyenKhoan &b)
+    std::sort(data.begin(), data.end(), [](const Transaction &a, const Transaction &b)
               {
                   return a.credit < b.credit; // Sort by credit in ascending order
               });
 
-    std::vector<ChuyenKhoan> results = rangeSearchVector(data, lower_key, upper_key);
+    std::vector<Transaction> temp = creditSearch(data, lower_key, upper_key);
+    std::vector<Transaction> results = detailSearch(detail_key, temp);
 
-    std::cout << "Total count: " << results.size() << std::endl;
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = end - start;
-
-    std::cout << "Program execution time: " << duration.count() << " seconds." << std::endl;
+    std::cout
+        << "["; // Start of JSON array
+    for (size_t i = 0; i < results.size(); ++i)
+    {
+        const Transaction &record = results[i];
+        std::cout << "{"
+                  << "\"date_time\": \"" << record.date_time << "\", "
+                  << "\"trans_no\": " << record.trans_no << ", "
+                  << "\"credit\": " << record.credit << ", "
+                  << "\"debit\": " << record.debit << ", "
+                  << "\"detail\": \"" << record.detail << "\""
+                  << "}";
+        if (i < results.size() - 1)
+            std::cout << ", "; // Add comma if not the last element
+    }
+    std::cout << "]";
 
     return 0;
 }
