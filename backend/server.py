@@ -1,5 +1,6 @@
 import subprocess
 import os
+import time
 from flask import Flask, jsonify, request
 from flask_restx import Api, Resource, fields
 from dotenv import load_dotenv
@@ -35,9 +36,14 @@ class Credit(Resource):
         lower_key = data.get('lower_key')
         upper_key = data.get('upper_key')
         
+        start = time.time()
+         
         try:
             # Pass the parameters to the subprocess command
             result = subprocess.run([os.path.join(os.getcwd(), 'credit'),detail_key,  lower_key, upper_key], capture_output=True, text=True, check=True)
+            end = time.time()
+            elapsed = end - start
+            print("MULTI THREAD:::", elapsed)
             return jsonify({"output": result.stdout})
         except subprocess.CalledProcessError as e:
             return jsonify({"error": e.stderr}), 500
