@@ -4,7 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include <chrono>
+#include <thread>
+#include <future>
 
 struct Transaction
 {
@@ -14,6 +15,13 @@ struct Transaction
     int debit;
     std::string detail;
 };
+
+std::string toLower(const std::string &s)
+{
+    std::string result = s;
+    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+    return result;
+}
 
 std::string removeQuotes(const std::string &s)
 {
@@ -120,6 +128,50 @@ std::vector<Transaction> detailSearch(const std::string &keyword, std::vector<Tr
     return result;
 }
 
+std::vector<Transaction> detailSearchParallel(const std::string &keyword, std::vector<Transaction> &transactions)
+{
+    std::vector<Transaction> results;
+    std::string lowerKeyword = toLower(keyword);
+
+    // Số lượng luồng song song (có thể thay đổi tùy theo số lượng dữ liệu và hệ thống)
+    unsigned int numThreads = std::thread::hardware_concurrency();
+    unsigned int chunkSize = transactions.size() / numThreads;
+
+    // Mảng để lưu kết quả từ các luồng
+    std::vector<std::future<std::vector<Transaction>>> futures;
+
+    // Chia công việc thành các phần nhỏ và thực hiện song song
+    for (unsigned int i = 0; i < numThreads; ++i)
+    {
+        unsigned int start = i * chunkSize;
+        unsigned int end = (i == numThreads - 1) ? transactions.size() : (i + 1) * chunkSize;
+
+        // Gửi mỗi phần công việc vào một luồng song song
+        futures.push_back(std::async(std::launch::async, [start, end, &transactions, lowerKeyword]()
+                                     {
+            std::vector<Transaction> localResults;
+            for (unsigned int j = start; j < end; ++j)
+            {
+                // Tìm kiếm trong trường detail
+                std::string lowerDetail = toLower(transactions[j].detail);
+                if (lowerDetail.find(lowerKeyword) != std::string::npos)
+                {
+                    localResults.push_back(transactions[j]);
+                }
+            }
+            return localResults; }));
+    }
+
+    // Kết hợp kết quả từ tất cả các luồng
+    for (auto &future : futures)
+    {
+        std::vector<Transaction> partialResults = future.get();
+        results.insert(results.end(), partialResults.begin(), partialResults.end());
+    }
+
+    return results;
+}
+
 int main(int argc, char *argv[])
 {
     // Check if the correct number of arguments is provided
@@ -143,7 +195,8 @@ int main(int argc, char *argv[])
               });
 
     std::vector<Transaction> temp = creditSearch(data, lower_key, upper_key);
-    std::vector<Transaction> results = detailSearch(detail_key, temp);
+    // std::vector<Transaction> results = detailSearch(detail_key, temp);
+    std::vector<Transaction> results = detailSearchParallel(detail_key, temp);
 
     std::cout
         << "["; // Start of JSON array
@@ -161,6 +214,9 @@ int main(int argc, char *argv[])
             std::cout << ", "; // Add comma if not the last element
     }
     std::cout << "]";
+
+    std::cout << std::endl
+              << "total counts: " << results.size();
 
     return 0;
 }
