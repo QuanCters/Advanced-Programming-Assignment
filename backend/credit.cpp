@@ -11,7 +11,7 @@ struct Transaction
 {
     std::string date_time;
     int trans_no;
-    int credit;
+    unsigned long credit;
     int debit;
     std::string detail;
 };
@@ -71,7 +71,7 @@ std::vector<Transaction> readCSV(const std::string &filename)
         std::getline(ss, value, ','); // Read trans_no
         record.trans_no = std::stoi(removeQuotes(value));
         std::getline(ss, value, ','); // Read credit
-        record.credit = std::stoi(removeQuotes(value));
+        record.credit = std::stoul(removeQuotes(value));
         std::getline(ss, value, ','); // Read debit
         record.debit = std::stoi(removeQuotes(value));
         std::getline(ss, value, ','); // Read detail
@@ -88,8 +88,8 @@ std::vector<Transaction> readCSV(const std::string &filename)
 
 std::vector<Transaction> creditSearch(
     const std::vector<Transaction> &data,
-    int lower_bound_val,
-    int upper_bound_val)
+    unsigned long lower_bound_val,
+    unsigned long upper_bound_val)
 {
     std::vector<Transaction> results;
 
@@ -183,8 +183,8 @@ int main(int argc, char *argv[])
 
     // int search_key = argv[1];
     std::string detail_key = argv[1];
-    int lower_key = std::stoi(argv[2]);
-    int upper_key = std::stoi(argv[3]);
+    int lower_key = std::stoul(argv[2]);
+    long upper_key = std::stoul(argv[3]);
 
     std::string filename = "chuyen_khoan.csv";
     std::vector<Transaction> data = readCSV(filename);
@@ -214,9 +214,6 @@ int main(int argc, char *argv[])
             std::cout << ", "; // Add comma if not the last element
     }
     std::cout << "]";
-
-    std::cout << std::endl
-              << "total counts: " << results.size();
 
     return 0;
 }
