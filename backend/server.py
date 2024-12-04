@@ -4,11 +4,13 @@ import time
 from flask import Flask, jsonify, request
 from flask_restx import Api, Resource, fields
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 load_dotenv()
 
 app = Flask(__name__)
 api = Api(app, version='1.0', description="API for searching")
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 search_model = api.model('Search', {
     'detail_key': fields.String(required= True, description= 'Detail key for the detail search'),
