@@ -9,61 +9,42 @@ import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Table from "react-bootstrap/Table";
 import "bootstrap-icons/font/bootstrap-icons.css";
-
-type Transactions = {
-  dateTime: string;
-  transNo: string;
-  credit: number;
-  debit: number;
-  detail: string;
-};
-
-const mockTransactions: Transactions[] = [
-  {
-    dateTime: "2024-11-28T08:00:00Z", // ISO 8601 format
-    transNo: "TXN001",
-    credit: 10000,
-    debit: 0,
-    detail: "Monthly salary deposited",
-  },
-  {
-    dateTime: "2024-11-28T12:45:00Z",
-    transNo: "TXN002",
-    credit: 0,
-    debit: 2500,
-    detail: "Grocery shopping at SuperMart",
-  },
-  {
-    dateTime: "2024-11-29T09:15:00Z",
-    transNo: "TXN003",
-    credit: 5000,
-    debit: 0,
-    detail: "Freelance project payment received",
-  },
-  {
-    dateTime: "2024-11-29T18:30:00Z",
-    transNo: "TXN004",
-    credit: 0,
-    debit: 1200,
-    detail: "Electricity bill payment",
-  },
-  {
-    dateTime: "2024-11-30T10:20:00Z",
-    transNo: "TXN005",
-    credit: 0,
-    debit: 2000,
-    detail: "Dining at Fancy Restaurant",
-  },
-  {
-    dateTime: "2024-12-01T08:30:00Z",
-    transNo: "TXN006",
-    credit: 1500,
-    debit: 0,
-    detail: "Cashback from SuperMart purchase",
-  },
-];
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { search } from "@/api";
 
 export default function Home() {
+  const mutation = useMutation({
+    mutationFn: (data: Record<string, string>) => search(data), // Định nghĩa rõ kiểu dữ liệu
+    onSuccess: (response) => {
+      console.log("Search successful:", response);
+    },
+    onError: (error) => {
+      console.error("Search failed:", error);
+    },
+  });
+
+  // Hàm xử lý khi submit form
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const finalData = Object.fromEntries(formData.entries()) as Record<
+      string,
+      string
+    >;
+
+    if (
+      !finalData.detail_key &&
+      (!finalData.lower_key || !finalData.upper_key)
+    ) {
+      console.log("Search content is required");
+      return;
+    }
+
+    console.log("Submitting data:", finalData);
+    mutation.mutate(finalData);
+  };
+
   return (
     <div>
       <Container className="py-3 g-4">
@@ -101,49 +82,42 @@ export default function Home() {
       </Container>
 
       <Container>
-        <Row className="g-2">
-          <Col xs={5}>
-            <Form>
-              <Form.Group
-                className="mb-3"
-                controlId="exampleForm.ControlInput1"
-              >
+        <Form onSubmit={handleSubmit}>
+          <Row className="g-2">
+            <Col xs={5}>
+              <Form.Group className="mb-3" controlId="detail_key">
                 <Form.Control
                   type="text"
+                  name="detail_key"
                   placeholder="Nhập nội dung tìm kiếm"
                 />
               </Form.Group>
-            </Form>
-          </Col>
-          <Col>
-            <Form>
-              <Form.Group
-                className="mb-3"
-                controlId="exampleForm.ControlInput1"
-              >
+            </Col>
+            <Col>
+              <Form.Group className="mb-3" controlId="lower_key">
                 <Form.Control
                   type="text"
+                  name="lower_key"
                   placeholder="Nhập giá tiền tối thiểu"
                 />
               </Form.Group>
-            </Form>
-          </Col>
-          <Col>
-            <Form>
-              <Form.Group
-                className="mb-3"
-                controlId="exampleForm.ControlInput1"
-              >
-                <Form.Control type="text" placeholder="Nhập giá tiền tối đa" />
+            </Col>
+            <Col>
+              <Form.Group className="mb-3" controlId="upper_key">
+                <Form.Control
+                  type="text"
+                  name="upper_key"
+                  placeholder="Nhập giá tiền tối đa"
+                />
               </Form.Group>
-            </Form>
-          </Col>
-          <Col>
-            <Button variant="primary">
-              <i className="bi bi-search"></i> Tìm kiếm
-            </Button>
-          </Col>
-        </Row>
+            </Col>
+            <Col>
+              <Button variant="primary" type="submit">
+                <i className="bi bi-search"></i> Tìm kiếm
+              </Button>
+            </Col>
+          </Row>
+        </Form>
       </Container>
 
       <Container>
@@ -158,7 +132,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {mockTransactions.map((transaction, index) => (
+            {/* {mockTransactions.map((transaction, index) => (
               <tr key={index}>
                 <td>{transaction.transNo}</td>
                 <td>
@@ -168,7 +142,7 @@ export default function Home() {
                 <td>{transaction.credit}</td>
                 <td>{transaction.detail}</td>
               </tr>
-            ))}
+            ))} */}
           </tbody>
         </Table>
       </Container>
