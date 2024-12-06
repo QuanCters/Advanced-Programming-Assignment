@@ -16,7 +16,7 @@ export const search = async (data: any) => {
   });
   if (!response.ok) throw new Error(response.statusText);
   const result = await response.json();
-  console.log(result);
+
   const [jsonString, totalCounts] = result.output.split("\ntotal counts: ");
   const transactions: Transactions[] = JSON.parse(jsonString);
   return transactions;
