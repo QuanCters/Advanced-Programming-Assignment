@@ -7,11 +7,18 @@ import Col from "react-bootstrap/Col";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
-import Table from "react-bootstrap/Table";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import {
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { search } from "@/api";
+import DataTable from "@/components/Table";
+import { useMemo } from "react";
+import { TRANSACTIONS_COLUMNS } from "@/utils/transactrionColumns";
 
 export default function Home() {
   const mutation = useMutation({
@@ -21,10 +28,10 @@ export default function Home() {
     },
     onError: (error) => {
       console.error("Search failed:", error);
+      alert(error);
     },
   });
 
-  // Hàm xử lý khi submit form
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -33,17 +40,27 @@ export default function Home() {
       string
     >;
 
-    if (
-      !finalData.detail_key &&
-      (!finalData.lower_key || !finalData.upper_key)
-    ) {
-      console.log("Search content is required");
-      return;
-    }
-
-    console.log("Submitting data:", finalData);
-    mutation.mutate(finalData);
+    mutation.mutate({
+      ...finalData,
+      lower_key: finalData.lower_key === "" ? "0" : finalData.lower_key,
+      upper_key:
+        finalData.upper_key === "" ? "2100000000" : finalData.upper_key,
+    });
   };
+
+  const columns = useMemo(() => TRANSACTIONS_COLUMNS, []);
+
+  const table = useReactTable({
+    data: mutation.data ?? [],
+    columns,
+    filterFns: {},
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    debugTable: true,
+    debugHeaders: true,
+    debugColumns: true,
+  });
 
   return (
     <div>
@@ -96,18 +113,23 @@ export default function Home() {
             <Col>
               <Form.Group className="mb-3" controlId="lower_key">
                 <Form.Control
-                  type="text"
+                  type="number"
                   name="lower_key"
                   placeholder="Nhập giá tiền tối thiểu"
+                  // defaultValue={0}
+                  min={0}
+                  max={2100000000}
                 />
               </Form.Group>
             </Col>
             <Col>
               <Form.Group className="mb-3" controlId="upper_key">
                 <Form.Control
-                  type="text"
+                  type="number"
                   name="upper_key"
                   placeholder="Nhập giá tiền tối đa"
+                  min={0}
+                  max={2100000000}
                 />
               </Form.Group>
             </Col>
@@ -121,30 +143,7 @@ export default function Home() {
       </Container>
 
       <Container>
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>Số CT</th>
-              <th>Ngày giao dịch</th>
-              <th>Số giao dịch</th>
-              <th>Số tiền</th>
-              <th>Nội dung</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* {mockTransactions.map((transaction, index) => (
-              <tr key={index}>
-                <td>{transaction.transNo}</td>
-                <td>
-                  {new Date(transaction.dateTime).toLocaleString("vi-VN")}
-                </td>
-                <td>120729</td>
-                <td>{transaction.credit}</td>
-                <td>{transaction.detail}</td>
-              </tr>
-            ))} */}
-          </tbody>
-        </Table>
+        <DataTable table={table} />
       </Container>
     </div>
   );
