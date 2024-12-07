@@ -90,7 +90,14 @@ export default function Home() {
               <Card.Body>
                 <Card.Title>Tổng số tiền</Card.Title>
                 <Card.Text style={{ fontSize: "2rem", fontWeight: "bold" }}>
-                  4.000.000
+                  {mutation.data
+                    ? new Intl.NumberFormat("de-DE").format(
+                        mutation.data.reduce(
+                          (sum, transaction) => sum + transaction.credit,
+                          0
+                        )
+                      )
+                    : "-"}
                 </Card.Text>
               </Card.Body>
             </Card>

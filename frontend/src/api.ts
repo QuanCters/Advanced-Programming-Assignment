@@ -4,6 +4,7 @@ export type Transactions = {
   credit: number;
   debit: number;
   detail: string;
+  doc_no: string;
 };
 
 export const search = async (data: any) => {
@@ -18,6 +19,18 @@ export const search = async (data: any) => {
   const result = await response.json();
 
   const [jsonString, totalCounts] = result.output.split("\ntotal counts: ");
-  const transactions: Transactions[] = JSON.parse(jsonString);
+  const transactions: Transactions[] = JSON.parse(jsonString).map(
+    (item: any) => {
+      if (
+        item.date_time &&
+        typeof item.date_time === "string" &&
+        item.date_time.includes("_")
+      ) {
+        const [date_time, doc_no] = item.date_time.split("_");
+        return { ...item, date_time, doc_no };
+      }
+      return item;
+    }
+  );
   return transactions;
 };
