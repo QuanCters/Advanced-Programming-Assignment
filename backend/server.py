@@ -45,7 +45,7 @@ class Credit(Resource):
             result = subprocess.run([os.path.join(os.getcwd(), 'credit'),detail_key,  lower_key, upper_key], capture_output=True, text=True, check=True)
             end = time.time()
             elapsed = end - start
-            print("MULTI THREAD:::", elapsed)
+            print("Total run time:", elapsed)
             return jsonify({"output": result.stdout})
         except subprocess.CalledProcessError as e:
             return jsonify({"error": e.stderr}), 500

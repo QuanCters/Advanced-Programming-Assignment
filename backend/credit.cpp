@@ -9,6 +9,7 @@
 
 struct Transaction
 {
+    std::string ct;
     std::string date_time;
     int trans_no;
     unsigned long credit;
@@ -67,7 +68,10 @@ std::vector<Transaction> readCSV(const std::string &filename)
 
         // Split the line by commas
         std::getline(ss, value, ','); // Read date_time
-        record.date_time = removeQuotes(value);
+        value = removeQuotes(value);
+        size_t underscore_pos = value.find('_');
+        record.date_time = value.substr(0, underscore_pos);
+        record.ct = value.substr(underscore_pos + 1);
         std::getline(ss, value, ','); // Read trans_no
         record.trans_no = std::stoi(removeQuotes(value));
         std::getline(ss, value, ','); // Read credit
@@ -130,6 +134,10 @@ std::vector<Transaction> detailSearch(const std::string &keyword, std::vector<Tr
 
 std::vector<Transaction> detailSearchParallel(const std::string &keyword, std::vector<Transaction> &transactions)
 {
+    if (keyword == "")
+    {
+        return transactions;
+    }
     std::vector<Transaction> results;
     std::string lowerKeyword = toLower(keyword);
 
@@ -204,6 +212,7 @@ int main(int argc, char *argv[])
     {
         const Transaction &record = results[i];
         std::cout << "{"
+                  << "\"ct\": \"" << record.ct << "\", "
                   << "\"date_time\": \"" << record.date_time << "\", "
                   << "\"trans_no\": " << record.trans_no << ", "
                   << "\"credit\": " << record.credit << ", "
