@@ -8,7 +8,7 @@ declare module "@tanstack/react-table" {
 }
 export const TRANSACTIONS_COLUMNS: ColumnDef<Transactions, any>[] = [
   {
-    accessorKey: "trans_no",
+    accessorKey: "doc_no",
     header: "Số CT",
     cell: (info) => info.getValue(),
     size: 60,
