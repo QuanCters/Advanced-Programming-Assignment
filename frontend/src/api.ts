@@ -1,3 +1,5 @@
+const BaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export type Transactions = {
   date_time: string;
   trans_no: string;
@@ -7,30 +9,42 @@ export type Transactions = {
   doc_no: string;
 };
 
-export const search = async (data: any) => {
-  const response = await fetch(`http://127.0.0.1:8000/search`, {
-    method: "POST",
+export const search = async (params: string) => {
+  const response = await fetch(`${BaseUrl}/query?q=${params}`, {
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
   });
+  console.log(response, "mmmm");
   if (!response.ok) throw new Error(response.statusText);
-  const result = await response.json();
+  let rawText = await response.text();
 
-  const [jsonString, totalCounts] = result.output.split("\ntotal counts: ");
-  const transactions: Transactions[] = JSON.parse(jsonString).map(
-    (item: any) => {
-      if (
-        item.date_time &&
-        typeof item.date_time === "string" &&
-        item.date_time.includes("_")
-      ) {
-        const [date_time, doc_no] = item.date_time.split("_");
-        return { ...item, date_time, doc_no };
-      }
-      return item;
+  // Loại bỏ ký tự xuống dòng dư thừa và xử lý JSON
+  rawText = rawText.replace(/\\n\\\"}/g, "}");
+  rawText = JSON.parse(rawText);
+  const result = JSON.parse(rawText);
+
+  if (!Array.isArray(result.records)) {
+    console.error("Invalid data format: 'records' is not an array.");
+    throw new Error("Invalid data format: 'records' is not an array.");
+  }
+
+  const transactions: Transactions[] = result.records.map((item: any) => {
+    if (
+      item.date_time &&
+      typeof item.date_time === "string" &&
+      item.date_time.includes("_")
+    ) {
+      const [date_time, doc_no] = item.date_time.split("_");
+      return {
+        ...item,
+        date_time,
+        doc_no,
+      };
     }
-  );
-  return transactions;
+    return item;
+  });
+
+  return { total: result.total, records: transactions };
 };
