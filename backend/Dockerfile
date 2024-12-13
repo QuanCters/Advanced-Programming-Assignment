@@ -4,13 +4,15 @@ RUN apt-get update && apt-get install -y g++
 
 WORKDIR /app
 
-COPY . /app 
+COPY backend/credit.cpp ./
+
+COPY backend/requirements.txt ./
 
 RUN g++ -o credit credit.cpp
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY backend/ ./ 
 
 EXPOSE 8000
 
