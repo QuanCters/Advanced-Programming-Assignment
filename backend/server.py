@@ -12,11 +12,11 @@ app = Flask(__name__)
 api = Api(app, version='1.0', description="API for searching")
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
-search_model = api.model('Search', {
-    'detail_key': fields.String(required= True, description= 'Detail key for the detail search'),
-    'lower_key': fields.String(required=True, description='Lower key for the credit search'),
-    'upper_key': fields.String(required=True, description='Upper key for the credit search')
-})
+# search_model = api.model('Search', {
+#     'detail_key': fields.String(required= True, description= 'Detail key for the detail search'),
+#     'lower_key': fields.String(required=True, description='Lower key for the credit search'),
+#     'upper_key': fields.String(required=True, description='Upper key for the credit search')
+# })
 
 response_model = api.model('Response', {
     'date_time': fields.String(required=True, description='Date and time of the transaction'),
@@ -26,27 +26,34 @@ response_model = api.model('Response', {
     'detail': fields.String(required=True, description='Details of the transaction')
 })
 
-@api.route('/search')
+full_response_model = api.model('FullResponse', {
+    'total': fields.String(required=True, description='Total number of records as string'),
+    'records': fields.List(fields.Nested(response_model), required=True, description='List of transaction records')
+})
+
+@api.route('/query')
+@api.param('q', 'Detail key for the search query')
 class Credit(Resource):
     @api.doc('search')
-    @api.expect(search_model, validate=True)
-    @api.response(200, 'Success', model=[response_model])
+    # @api.expect(search_model, validate=True)
+    @api.response(200, 'Success', model=full_response_model)
     @api.response(500, 'Internal Server Error')
-    def post(self):
-        data = request.json
-        detail_key = data.get('detail_key')
-        lower_key = data.get('lower_key')
-        upper_key = data.get('upper_key')
+    def get(self):
+        # data = request.json
+        # detail_key = data.get('detail_key')
+        # lower_key = data.get('lower_key')
+        # upper_key = data.get('upper_key')
+        detail_key = request.args.get('q')
         
         start = time.time()
          
         try:
             # Pass the parameters to the subprocess command
-            result = subprocess.run([os.path.join(os.getcwd(), 'credit'),detail_key,  lower_key, upper_key], capture_output=True, text=True, check=True)
+            result = subprocess.run([os.path.join(os.getcwd(), 'credit'),detail_key], capture_output=True, text=True, check=True)
             end = time.time()
             elapsed = end - start
             print("Total run time:", elapsed)
-            return jsonify({"output": result.stdout})
+            return jsonify(result.stdout)
         except subprocess.CalledProcessError as e:
             return jsonify({"error": e.stderr}), 500
 
