@@ -1,0 +1,8 @@
+run web:
+cd backend
+g++ credit.cpp -o credit -pthread
+python server.py
+cd ../frontend
+npm install
+npm run dev
+http://localhost:3000/
